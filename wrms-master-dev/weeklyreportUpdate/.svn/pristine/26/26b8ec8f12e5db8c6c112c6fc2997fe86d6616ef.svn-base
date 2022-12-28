@@ -1,0 +1,4 @@
+struts.messages.error.file.too.large = Uploaded File size is too large
+struts.messages.error.uploading = File upload failed
+struts.messages.error.content.type.not.allowed =\uFF25\uFF58\uFF43\uFF45\uFF4C\u30D5\u30A1\u30A4\u30EB\u4EE5\u5916\u306F\u7121\u52B9\u3067\u3059\u3002
+struts.messages.error.file.extension.not.allowed =File extension is not allowed.

@@ -1,0 +1,30 @@
+package com.common;
+
+public class CommonConstant {
+	// 画面リスト
+	public static enum SCREEN_NO {
+		LOGOUT("001"),
+		REPORT_ENTRY("002"),
+		REPORT_LIST("003"),		
+		ATTENDANCE_ENTRY("004"),
+		ATTENDANCE_LIST("005"),
+		ATTENDANCE_SETTING("006"),		
+		EMPLOYEE_ENTRY("007"),
+		EMPLOYEE_LIST("008"),		
+		CUSTOMER_ENTRY("009"),
+		CUSTOMER_LIST("010"),
+		GROUP_ENTRY("011"),
+		GROUP_LIST("012"),
+		SIGNUP_ENTRY("013"),
+		SIGNUP_LIST("014"),
+		EMP_SIGNUP("015"),
+		EXPORT("016"),
+		IMPORT("017");
+	
+		public String value;
+		
+		private SCREEN_NO(String value) {
+			this.value = value;
+		}
+	}
+}

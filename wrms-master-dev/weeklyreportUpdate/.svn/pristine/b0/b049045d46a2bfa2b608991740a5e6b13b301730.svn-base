@@ -1,0 +1,237 @@
+package com.common;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.model.ReportTime;
+
+/**
+ * @author kyiminhan
+ *
+ */
+public class FileHelper {
+	@SuppressWarnings("resource")
+	public ArrayList<ReportTime> readFile(FileInputStream stream, int sheetNo) {
+		ArrayList<ReportTime> reportTimes = new ArrayList<>();
+		try {
+			XSSFWorkbook xssfWorkbook = new XSSFWorkbook(stream);
+			XSSFSheet sheet = xssfWorkbook.getSheetAt(sheetNo);
+			FormulaEvaluator evaluator = xssfWorkbook.getCreationHelper().createFormulaEvaluator();
+
+			int numberOfDay = 31;
+			XSSFCell xssfCell = sheet.getRow(3).getCell(1);
+			if (xssfCell != null && xssfCell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC) {
+				try {
+					Date date = HSSFDateUtil.getJavaDate(xssfCell.getNumericCellValue());
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTime(date);
+					numberOfDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+			for (int row = 2; row <= numberOfDay + 2; row++) {
+				ReportTime reportTime = new ReportTime();
+				ArrayList<String> list = new ArrayList<>();
+				XSSFRow r = sheet.getRow(row);
+				for (int col = 1; col <= 14; col++) {
+					XSSFCell c = r.getCell(col);
+					String data = null;
+					if (c == null || c.getCellType() == XSSFCell.CELL_TYPE_BLANK) {
+						list.add("");
+						continue;
+					} else if (c.getCellType() == HSSFCell.CELL_TYPE_NUMERIC) {
+						if (1 == col) {
+							Date date = HSSFDateUtil.getJavaDate(c.getNumericCellValue());
+							SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+							data = dateFormat.format(date).toString();
+							list.add(data);
+						} else if (3 == col) {
+							int value = (int) c.getNumericCellValue();
+							data = String.valueOf(value);
+							list.add(data);
+						} else {
+							if (HSSFDateUtil.isCellDateFormatted(c)) {
+								Date date = HSSFDateUtil.getJavaDate(c.getNumericCellValue());
+								SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+								data = dateFormat.format(date).toString();
+								list.add(data);
+							} else {
+								Double d = c.getNumericCellValue();
+								data = d.toString();
+								list.add(data);
+							}
+						}
+					} else if (c.getCellType() == Cell.CELL_TYPE_STRING) {
+						data = c.getStringCellValue();
+						list.add(data);
+					} else if (c.getCellType() == Cell.CELL_TYPE_FORMULA) {
+						data = evaluator.evaluateInCell(c).toString();
+						list.add(data);
+					}
+				}
+				// boolean flag = true; // not check times are empty.
+				boolean flag = false;// check times are empty.
+				loop: for (int i = 3; i < list.size() - 3; i++) {
+					if (!list.get(i).isEmpty()) {
+						flag = true;
+						break loop;
+					}
+				}
+				if (flag) {
+					reportTime.setExcelData(list);
+					reportTimes.add(reportTime);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return reportTimes;
+	}
+
+	public ArrayList<ReportTime> totalResult(ArrayList<ReportTime> list) {
+		ReportTime rt = new ReportTime();
+		ArrayList<String> l = new ArrayList<String>();
+		for (int i = 0; i < 14; i++) {
+			l.add(new String());
+		}
+		rt.setExcelData(l);
+		list.add(rt);
+		String num6 = null, num7 = null, num8 = null, num9 = null, num10 = null, num11 = null;
+				
+		int lastIndex = list.size() - 1;
+		for (int i = 1; i <= list.size() - 2; i++) {
+			for (int j = 6; j < 12; j++) {
+				switch (j) {
+				case 6:
+					String str6 = list.get(i).getExcelData().get(j);
+					num6 = totalColData(num6, str6);
+					list.get(lastIndex).getExcelData().set(j, num6);
+					break;
+				case 7:
+					String str7 = list.get(i).getExcelData().get(j);
+					num7 = totalColData(num7, str7);
+					list.get(lastIndex).getExcelData().set(j, num7);
+					break;
+				case 8:
+					String str8 = list.get(i).getExcelData().get(j);
+					num8 = totalColData(num8, str8);
+					list.get(lastIndex).getExcelData().set(j, num8);
+					break;
+				case 9:
+					String str9 = list.get(i).getExcelData().get(j);
+					num9 = totalColData(num9, str9);
+					list.get(lastIndex).getExcelData().set(j, num9);
+					break;
+				case 10:
+					String str10 = list.get(i).getExcelData().get(j);
+					num10 = totalColData(num10, str10);
+					list.get(lastIndex).getExcelData().set(j, num10);
+					break;
+				case 11:
+					String str11 = list.get(i).getExcelData().get(j);
+					num11 = totalColData(num11, str11);
+					list.get(lastIndex).getExcelData().set(j, num11);
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		return list;
+	}
+
+	/* ˆêŽž“ICommentOut
+	@SuppressWarnings("deprecation")
+	private String totalColData(String str1, String str2) {
+		if (str1 == null || str1.isEmpty()) {
+			str1 = "0";
+		}
+		if (str2 == null || str2.isEmpty()) {
+			str2 = "0:0";
+		}
+		Integer sum = Integer.parseInt(str1);
+		SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+		Date date;
+		try {
+			date = dateFormat.parse(str2);
+			Integer i = date.getHours();
+			sum = sum + i;
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return sum != 0 ? sum.toString() : new String();
+	} */
+	
+	/*‡ŒvŽžŠÔŒvŽZ‚Ìê‡Hour‚Ì‚ÝŒvŽZ‚µ‚Ä‚¢‚éƒoƒOC³‘Î‰ž*/
+	@SuppressWarnings("deprecation")
+	private String totalColData(String str1, String str2) {
+		if (str1 == null || str1.isEmpty()) {
+			str1 = "0:0";
+		}
+		if (str2 == null || str2.isEmpty()) {
+			str2 = "0:0";
+		}
+			
+		Integer sum = 0;
+		String result = new String();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+		Date date;
+		try {			
+			
+			String[] parts = str1.split(":");			
+			Integer inthour_str1 = 0;
+			Integer intmin_str1= 0;
+			
+			inthour_str1 = Integer.parseInt(parts[0]);
+			intmin_str1 = Integer.parseInt(parts[1]);			
+
+			
+			//date = dateFormat.parse(str1);
+			//Integer inthour_str1 = date.getHours();
+			//Integer intmin_str1 = date.getMinutes();			
+		
+			date = dateFormat.parse(str2);
+			Integer inthour_str2 = date.getHours();
+			Integer intmin_str2 = date.getMinutes();
+			
+			
+			Integer inttotmin = intmin_str1 + intmin_str2;
+			Integer intTmpHour  = 0;
+			Integer intTmpMin = 0;
+			
+			if (inttotmin >= 60)
+			{
+				 intTmpHour = inttotmin/60;
+				 intTmpMin  = inttotmin%60;				
+			}
+			else 
+			{
+				intTmpMin = inttotmin;
+			}			
+			
+			sum = inthour_str1+ inthour_str2+intTmpHour;
+			result =String.format("%02d:%02d",sum,intTmpMin);	
+
+			
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return (result == "00:00")? new String(): result;
+	}
+}

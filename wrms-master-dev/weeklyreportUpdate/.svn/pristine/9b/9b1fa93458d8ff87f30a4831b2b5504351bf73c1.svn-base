@@ -1,0 +1,120 @@
+package com.model;
+
+import java.util.List;
+
+public class AttendanceListFormDetail{
+	int id;
+	String start_time;
+	String end_time;
+	String choose_date;
+	String work_hour;
+	String overtime;
+	String midnight_overtime;
+	String compensatory_leave_hour;
+	String releaving_leave_hour;
+	String task_description;
+	String midnight_compensatory_leave_hour;
+	String emp_cd;
+	String emp_name;
+	String day;
+	String break_time;
+	// カレンダー上での祝日
+	List<String> holidayList;
+	
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getStart_time() {
+		return start_time;
+	}
+	public void setStart_time(String start_time) {
+		this.start_time = start_time;
+	}
+	public String getEnd_time() {
+		return end_time;
+	}
+	public void setEnd_time(String end_time) {
+		this.end_time = end_time;
+	}
+	public String getChoose_date() {
+		return choose_date;
+	}
+	public void setChoose_date(String choose_date) {
+		this.choose_date = choose_date;
+	}
+	public String getWork_hour() {
+		return work_hour;
+	}
+	public void setWork_hour(String work_hour) {
+		this.work_hour = work_hour;
+	}
+	public String getOvertime() {
+		return overtime;
+	}
+	public void setOvertime(String overtime) {
+		this.overtime = overtime;
+	}
+	public String getMidnight_overtime() {
+		return midnight_overtime;
+	}
+	public void setMidnight_overtime(String midnight_overtime) {
+		this.midnight_overtime = midnight_overtime;
+	}
+	public String getCompensatory_leave_hour() {
+		return compensatory_leave_hour;
+	}
+	public void setCompensatory_leave_hour(String compensatory_leave_hour) {
+		this.compensatory_leave_hour = compensatory_leave_hour;
+	}
+	public String getReleaving_leave_hour() {
+		return releaving_leave_hour;
+	}
+	public void setReleaving_leave_hour(String releaving_leave_hour) {
+		this.releaving_leave_hour = releaving_leave_hour;
+	}
+	public String getTask_description() {
+		return task_description;
+	}
+	public void setTask_description(String task_description) {
+		this.task_description = task_description;
+	}
+	public String getMidnight_compensatory_leave_hour() {
+		return midnight_compensatory_leave_hour;
+	}
+	public void setMidnight_compensatory_leave_hour(String midnight_compensatory_leave_hour) {
+		this.midnight_compensatory_leave_hour = midnight_compensatory_leave_hour;
+	}
+	public String getDay() {
+		return day;
+	}
+	public void setDay(String day) {
+		this.day = day;
+	}
+	public String getBreak_time() {
+		return break_time;
+	}
+	public void setBreak_time(String break_time) {
+		this.break_time = break_time;
+	}
+	public String getEmp_cd() {
+		return emp_cd;
+	}
+	public void setEmp_cd(String emp_cd) {
+		this.emp_cd = emp_cd;
+	}
+	public String getEmp_name() {
+		return emp_name;
+	}
+	public void setEmp_name(String emp_name) {
+		this.emp_name = emp_name;
+	}
+	public List<String> getHolidayList() {
+		return holidayList;
+	}
+	public void setHolidayList(List<String> holidayList) {
+		this.holidayList = holidayList;
+	}
+}

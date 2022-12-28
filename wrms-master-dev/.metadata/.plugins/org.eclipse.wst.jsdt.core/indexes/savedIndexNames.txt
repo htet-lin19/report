@@ -1,0 +1,7 @@
+INDEX VERSION 1.4+D:\??\wrms-master-dev\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+1042638341.index
+1621458230.index
+1595573289.index
+818687751.index
+3998544848.index
+1881658253.index

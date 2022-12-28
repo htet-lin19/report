@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding//src/main/java/com/action/AttendanceListAction.java=UTF-8
+encoding//src/main/java/com/action/AttendanceSettingAction.java=UTF-8
+encoding//src/main/java/com/action/AttendanceSummaryImportAction.java=UTF-8
+encoding//src/main/java/com/action/LeaveSummaryInfoAction.java=UTF-8
+encoding//src/main/java/com/action/ReportEntryAction.java=UTF-8
+encoding//src/main/java/com/common/FileValidation.java=UTF-8
+encoding//src/main/java/com/common/LeaveFileValidation.java=UTF-8
+encoding//src/main/java/com/common/SummaryFileValidation.java=UTF-8
+encoding//src/main/webapp/attendanceEntry.jsp=UTF-8
+encoding//src/main/webapp/attendanceSummaryInfo.jsp=UTF-8

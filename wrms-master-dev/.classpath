@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="weeklyreportUpdate/src/main/java"/>
+	<classpathentry kind="lib" path="weeklyreportUpdate/src/main/resources/ajd4jp-1.4.4.2018.jar"/>
+	<classpathentry kind="lib" path="weeklyreportUpdate/src/main/resources/ajd4jp-1.4.6.2019.jar"/>
+	<classpathentry kind="lib" path="weeklyreportUpdate/src/main/webapp/WEB-INF/lib/ajd4jp-1.4.1.2017.jar"/>
+	<classpathentry kind="lib" path="weeklyreportUpdate/src/main/webapp/WEB-INF/lib/ajd4jp-1.4.6.2019.jar"/>
+	<classpathentry kind="output" path="weeklyreportUpdate/target/classes"/>
+</classpath>

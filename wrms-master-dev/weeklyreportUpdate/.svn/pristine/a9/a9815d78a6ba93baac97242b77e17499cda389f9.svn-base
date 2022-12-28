@@ -1,0 +1,822 @@
+package com.action;
+
+import static java.time.DayOfWeek.MONDAY;
+import static java.time.temporal.TemporalAdjusters.previousOrSame;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.struts2.dispatcher.SessionMap;
+import org.apache.struts2.interceptor.ServletRequestAware;
+import org.apache.struts2.interceptor.SessionAware;
+import com.common.CommonCheck;
+import com.common.CommonConstant;
+import com.jdbc.DataConnection;
+import com.model.AttendanceListFormDetail;
+import com.model.ReportContentForm;
+import com.model.ReportContentFormDetail;
+import com.opensymphony.xwork2.ActionSupport;
+import ajd4jp.AJD;
+import ajd4jp.AJDException;
+import ajd4jp.Holiday;
+import ajd4jp.Month;
+
+public class AttendanceEntryAction extends ActionSupport implements ServletRequestAware, SessionAware {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	HttpServletRequest request;
+	AttendanceListFormDetail attendanceListEidtFrm = new AttendanceListFormDetail();
+	SessionMap<String, Object> sessionmap;
+	SessionMap<String, List<String>> sessionlist;
+	ReportContentForm reportContentFrm = new ReportContentForm();
+	int rowIndex;
+	/* For Edit Page */
+	String hiddenId;
+	String pageNo;
+
+	public String getHiddenId() {
+		return hiddenId;
+	}
+
+	public void setHiddenId(String hiddenId) {
+		this.hiddenId = hiddenId;
+	}
+
+	public String getPageNo() {
+		return pageNo;
+	}
+
+	public void setPageNo(String pageNo) {
+		this.pageNo = pageNo;
+	}
+
+	public AttendanceListFormDetail getAttendanceListEidtFrm() {
+		return attendanceListEidtFrm;
+	}
+
+	public void setAttendanceListEidtFrm(AttendanceListFormDetail attendanceListEidtFrm) {
+		this.attendanceListEidtFrm = attendanceListEidtFrm;
+	}
+
+	public ReportContentForm getReportContentFrm() {
+		return reportContentFrm;
+	}
+
+	public void setReportContentFrm(ReportContentForm reportContentFrm) {
+		this.reportContentFrm = reportContentFrm;
+	}
+	
+	public int getRowIndex() {
+		return rowIndex;
+	}
+
+	public void setRowIndex(int rowIndex) {
+		this.rowIndex = rowIndex;
+	}
+	
+	/**
+	 * Edit
+	 * 
+	 * @return
+	 */
+	public String edit() {
+		// 権限チェック
+		if (sessionmap.get("ID") == null) {
+			return "session";
+		} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_LIST.value,
+				sessionmap.get("ID").toString())) {
+			return "role";
+		}
+		Connection conn;
+		try {			
+			// 2018/10/15追加
+			// 実行日取得
+			Date date = new Date();
+			Calendar c = Calendar.getInstance();
+			c.setTime(date);
+			int month = c.get(Calendar.MONTH)+1;
+			int year = c.get(Calendar.YEAR);
+			int lastMonth = month - 1;
+			int lastYear = year;
+			int nextMonth = month + 1;
+			int nextYear = year;
+			List<String> holidayList = new ArrayList<>();
+			// 2018/10/15追加
+			// 前月、今月、来月の祝日取得
+			holidayList.addAll(getHolidaysByMonth(year, month));
+			
+			// 前月の祝日取得
+			if (month == 1) {
+				lastYear = year - 1;
+				lastMonth = 12;
+			}
+			holidayList.addAll(getHolidaysByMonth(lastYear, lastMonth));
+						
+			// 来月の祝日取得
+			if (month == 12) {
+				nextYear = year + 1;
+				nextMonth = 1;
+			}
+			holidayList.addAll(getHolidaysByMonth(nextYear, nextMonth));
+			attendanceListEidtFrm.setHolidayList(holidayList);
+			conn = DataConnection.getConnection();
+
+			String sql = "SELECT * FROM attendance WHERE id ='" + hiddenId + "'";
+			PreparedStatement ps1 = conn.prepareStatement(sql);
+			ResultSet rs = ps1.executeQuery();
+			if (rs.next()) {
+				// set data to form
+				attendanceListEidtFrm.setChoose_date(rs.getString("choose_date"));
+				attendanceListEidtFrm.setDay(rs.getString("day"));
+				attendanceListEidtFrm.setStart_time(rs.getString("start_time"));
+				attendanceListEidtFrm.setEnd_time(rs.getString("end_time"));
+				attendanceListEidtFrm.setBreak_time(rs.getString("break_time"));
+				attendanceListEidtFrm.setWork_hour(rs.getString("work_hour"));
+				attendanceListEidtFrm.setOvertime(rs.getString("overtime"));
+				attendanceListEidtFrm.setMidnight_overtime(rs.getString("midnight_overtime"));
+				attendanceListEidtFrm.setCompensatory_leave_hour(rs.getString("compensatory_leave_hour"));
+				attendanceListEidtFrm.setReleaving_leave_hour(rs.getString("releaving_leave_hour"));
+				attendanceListEidtFrm.setTask_description(rs.getString("task_description"));
+			}
+			request.setAttribute("attendanceListEidtFrm", attendanceListEidtFrm);
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+			//convert String to LocalDate
+			LocalDate choose_date = LocalDate.parse(attendanceListEidtFrm.getChoose_date(), formatter);;
+		    LocalDate started_date = choose_date.with(previousOrSame(MONDAY));
+			sql = "SELECT report_cd FROM reportcontent WHERE emp_cd ='" +sessionmap.get("ID").toString()+ "' AND started_date ='"+started_date+"'";
+			ps1 = conn.prepareStatement(sql);
+			rs = ps1.executeQuery();	
+			String rptCd = "";			
+			if(rs!=null && rs.next()) {
+				rptCd = rs.getString("report_cd");
+				sql = "SELECT * FROM reportcontentdetail WHERE report_cd ='" +rptCd+ "' AND work_date ='"+attendanceListEidtFrm.getChoose_date()+"' ORDER BY work_date,reportdetail_cd";
+				ps1 = conn.prepareStatement(sql);
+				rs = ps1.executeQuery();
+				List<ReportContentFormDetail> detailList = new ArrayList<ReportContentFormDetail>(); 
+				String wdate = "";
+				while (rs.next()) {
+					ReportContentFormDetail detail = new ReportContentFormDetail();
+					detail.setReportdetail_cd(rs.getString("reportdetail_cd"));
+					detail.setReport_cd(rs.getString("report_cd"));
+					detail.setResult(rs.getString("result"));
+					detail.setWork_date(rs.getString("work_date"));
+					detail.setActual_time(rs.getString("actual_time"));
+					detail.setCreated_date(rs.getString("created_date"));
+					if (!wdate.equals(rs.getString("work_date"))) {
+						detail.setMode("1");//EditMode
+						wdate = rs.getString("work_date");
+					}
+					else{
+						detail.setMode("0");
+					}
+					detailList.add(detail);
+					reportContentFrm.setReportContentDetail(detailList);
+					request.setAttribute("reportContentFrm", reportContentFrm);
+				}
+			} else {
+				List<ReportContentFormDetail> detailList = new ArrayList<ReportContentFormDetail>(); 
+				ReportContentFormDetail detail = new ReportContentFormDetail();
+					detail.setMode("1");//EditMode
+					detailList.add(detail);	
+				reportContentFrm.setReportContentDetail(detailList);
+				request.setAttribute("reportContentFrm", reportContentFrm);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ERROR;
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 登録処理
+	 * 
+	 * @return
+	 */
+	public String insert() {
+		try {
+			// 権限チェック
+			if (sessionmap.get("ID") == null) {
+				return "session";
+			} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+					sessionmap.get("ID").toString())) {
+				return "role";
+			}
+
+			// 通知回数チェック
+			if (sessionmap.get("NOTIFICATION_COUNT") != null) {
+				List<String> notificationList = (List<String>) sessionlist.get("NOTIFICATION_LIST");
+				if (notificationList != null) {
+					if (notificationList.contains(attendanceListEidtFrm.getChoose_date())) {
+						notificationList.remove(attendanceListEidtFrm.getChoose_date());
+						int count = Integer.parseInt(sessionmap.get("NOTIFICATION_COUNT").toString());
+						count = count - 1;
+						sessionmap.put("NOTIFICATION_COUNT", count + "");
+					}
+				}
+			}
+
+			Connection conn = null;
+			ResultSet rs;
+			int status = 0;
+
+			conn = DataConnection.getConnection();
+			Timestamp fixed_time = new Timestamp(new Date().getTime());
+			
+			String query2 = "SELECT * FROM attendance WHERE choose_date='" + attendanceListEidtFrm.getChoose_date()
+					+ "'AND emp_cd='" + attendanceListEidtFrm.getEmp_cd() + "'";
+			PreparedStatement ps2 = conn.prepareStatement(query2);
+			rs = ps2.executeQuery();
+			if (!rs.next()) {
+				String query = "INSERT INTO attendance(start_time, end_time, choose_date, "
+						+ "work_hour, overtime, midnight_overtime, "
+						+ "compensatory_leave_hour, releaving_leave_hour, task_description, "
+						+ "midnight_compensatory_leave_hour, created_date, modified_date, "
+						+ "emp_cd, day, break_time) " + "VALUES(?,?,?," + "?,?,?," + "?,?,?," + "?,?,?," + "?,?,?)";
+				PreparedStatement ps = conn.prepareStatement(query);
+				ps.setString(1, attendanceListEidtFrm.getStart_time());
+				ps.setString(2, attendanceListEidtFrm.getEnd_time());
+				ps.setString(3, attendanceListEidtFrm.getChoose_date());
+				ps.setString(4, attendanceListEidtFrm.getWork_hour());
+				ps.setString(5, attendanceListEidtFrm.getOvertime());
+				ps.setString(6, attendanceListEidtFrm.getMidnight_overtime());
+				ps.setString(7, attendanceListEidtFrm.getCompensatory_leave_hour());
+				ps.setString(8, attendanceListEidtFrm.getReleaving_leave_hour());
+				ps.setString(9, attendanceListEidtFrm.getTask_description());
+				ps.setString(10, attendanceListEidtFrm.getMidnight_compensatory_leave_hour());
+				ps.setTimestamp(11, fixed_time);
+				ps.setTimestamp(12, fixed_time);
+				ps.setString(13, attendanceListEidtFrm.getEmp_cd());
+				if (attendanceListEidtFrm.getDay() != null && attendanceListEidtFrm.getDay().equals("true"))
+					ps.setString(14, "1");
+				else
+					ps.setString(14, "0");
+				ps.setString(15, attendanceListEidtFrm.getBreak_time());
+				
+				status = ps.executeUpdate();
+			}
+
+			if (status == 1) {
+				//get Monday of choose Date
+				String start_date = getMondayDate(attendanceListEidtFrm.getChoose_date());
+				//store work record
+				createWorkRecord(attendanceListEidtFrm.getEmp_cd(), start_date, attendanceListEidtFrm.getChoose_date(), attendanceListEidtFrm.getWork_hour(), reportContentFrm);		
+			
+				addActionMessage("登録しました。");
+				attendanceListEidtFrm.setStart_time("");
+				attendanceListEidtFrm.setEnd_time("");
+				attendanceListEidtFrm.setChoose_date("");
+				attendanceListEidtFrm.setWork_hour("");
+				attendanceListEidtFrm.setOvertime("");
+				attendanceListEidtFrm.setMidnight_overtime("");
+				attendanceListEidtFrm.setCompensatory_leave_hour("");
+				attendanceListEidtFrm.setReleaving_leave_hour("");
+				attendanceListEidtFrm.setTask_description("");
+				attendanceListEidtFrm.setMidnight_compensatory_leave_hour("");
+				attendanceListEidtFrm.setDay("false");
+				attendanceListEidtFrm.setBreak_time("");
+
+				execute();
+			} else {
+				addActionError("『社員番号、日付 』が重複になっています。");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ERROR;
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * クリア処理
+	 * 
+	 * @return
+	 */
+	public String Clear() {
+		// 権限チェック
+		if (sessionmap.get("ID") == null) {
+			return "session";
+		} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+				sessionmap.get("ID").toString())) {
+			return "role";
+		}
+
+		attendanceListEidtFrm.setStart_time("");
+		attendanceListEidtFrm.setEnd_time("");
+		attendanceListEidtFrm.setChoose_date("");
+		attendanceListEidtFrm.setWork_hour("");
+		attendanceListEidtFrm.setOvertime("");
+		attendanceListEidtFrm.setMidnight_overtime("");
+		attendanceListEidtFrm.setCompensatory_leave_hour("");
+		attendanceListEidtFrm.setReleaving_leave_hour("");
+		attendanceListEidtFrm.setTask_description("");
+		attendanceListEidtFrm.setMidnight_compensatory_leave_hour("");
+		attendanceListEidtFrm.setDay("");
+		attendanceListEidtFrm.setBreak_time("");
+
+		execute();
+		return SUCCESS;
+	}
+
+	/**
+	 * 初期表示処理
+	 */
+	public String execute() {
+		// 権限チェック
+		sessionmap.put("dateID", "date_0");
+		if (sessionmap.get("ID") == null) {
+			return "session";
+		} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+				sessionmap.get("ID").toString())) {
+			return "role";
+		}
+
+		// セッションデータ取得
+		String emp_cd = (String) sessionmap.get("ID");
+
+		String sql = "SELECT * FROM attendancemaster WHERE emp_cd = '" + emp_cd + "'";
+
+		// 2018/10/15追加
+		// 実行日取得
+		Date date = new Date();
+		Calendar c = Calendar.getInstance();
+		c.setTime(date);
+		int month = c.get(Calendar.MONTH)+1;
+		int year = c.get(Calendar.YEAR);
+		int lastMonth = month - 1;
+		int lastYear = year;
+		int nextMonth = month + 1;
+		int nextYear = year;
+		List<String> holidayList = new ArrayList<>();
+		
+		Connection conn;
+		try {
+			conn = DataConnection.getConnection();
+			PreparedStatement ps1 = conn.prepareStatement(sql);
+			ResultSet rs = ps1.executeQuery();
+
+			while (rs.next()) {
+				attendanceListEidtFrm.setStart_time(rs.getString("start_time"));
+				attendanceListEidtFrm.setEnd_time(rs.getString("end_time"));
+				attendanceListEidtFrm.setWork_hour(rs.getString("work_hour"));
+				attendanceListEidtFrm.setBreak_time(rs.getString("break_time"));				
+			}
+			attendanceListEidtFrm.setMidnight_overtime(null);
+			
+			// 2018/10/15追加
+			// 前月、今月、来月の祝日取得
+			holidayList.addAll(getHolidaysByMonth(year, month));
+			
+			// 前月の祝日取得
+			if (month == 1) {
+				lastYear = year - 1;
+				lastMonth = 12;
+			}
+			holidayList.addAll(getHolidaysByMonth(lastYear, lastMonth));
+						
+			// 来月の祝日取得
+			if (month == 12) {
+				nextYear = year + 1;
+				nextMonth = 1;
+			}
+			holidayList.addAll(getHolidaysByMonth(nextYear, nextMonth));
+			attendanceListEidtFrm.setHolidayList(holidayList);
+			
+			request.setAttribute("attendanceListEidtFrm", attendanceListEidtFrm);
+		
+			List<ReportContentFormDetail> detailList = new ArrayList<ReportContentFormDetail>(); 
+			ReportContentFormDetail detail = new ReportContentFormDetail();
+				detail.setMode("1");//EditMode
+				detailList.add(detail);	
+			reportContentFrm.setReportContentDetail(detailList);
+			request.setAttribute("reportContentFrm", reportContentFrm);
+			hiddenId = null;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ERROR;
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * AddRowボタン
+	 * 作成(5/2020)ssl
+	 */
+	public String add() {		
+		if (sessionmap.get("ID") == null) {
+			return "session";
+		} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+				sessionmap.get("ID").toString())) {
+			return "role";
+		}
+		reportContentFrm = (ReportContentForm)request.getAttribute("reportContentFrm");
+		List<ReportContentFormDetail> detailListOldList = reportContentFrm.getReportContentDetail();
+		List<ReportContentFormDetail> detailListNewList = new ArrayList<ReportContentFormDetail>();
+		int rowNo = (int)request.getAttribute("rowIndex");
+		int count = 0;
+		for (ReportContentFormDetail detailOld:detailListOldList) {
+			ReportContentFormDetail detailNew = new ReportContentFormDetail();
+			detailNew = detailOld;
+			detailListNewList.add(detailNew);	
+			if(rowNo == count) {
+				detailNew = new ReportContentFormDetail();
+				detailNew.setMode("0");
+				detailListNewList.add(detailNew);
+			}
+			count++;
+		}
+		reportContentFrm.setReportContentDetail(detailListNewList);
+		request.setAttribute("reportContentFrm", reportContentFrm);
+		attendanceListEidtFrm.setChoose_date(attendanceListEidtFrm.getChoose_date());
+		return SUCCESS;
+	}
+	
+	/**
+	 * Removeボタン
+	 * 作成(5/2020)ssl
+	 */
+	public String remove() {
+		if (sessionmap.get("ID") == null) {
+			return "session";
+		} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+				sessionmap.get("ID").toString())) {
+			return "role";
+		}
+		reportContentFrm = (ReportContentForm)request.getAttribute("reportContentFrm");
+		List<ReportContentFormDetail> detailListOldList = reportContentFrm.getReportContentDetail();
+		List<ReportContentFormDetail> detailListNewList = new ArrayList<ReportContentFormDetail>();
+		int rowNo = (int)request.getAttribute("rowIndex");
+		int count = 0;
+		for (ReportContentFormDetail detailOld:detailListOldList) {	
+			if(rowNo != count) {
+				ReportContentFormDetail detailNew = new ReportContentFormDetail();
+				detailNew = detailOld;
+				detailListNewList.add(detailNew);
+			}
+			count++;
+		}
+		reportContentFrm.setSearch(reportContentFrm.getSearch());
+		reportContentFrm.setReportContentDetail(detailListNewList);
+		reportContentFrm.setStarted_date(reportContentFrm.getStarted_date_hidden());
+		request.setAttribute("reportContentFrm", reportContentFrm);
+		return SUCCESS;
+	}
+	
+	/**
+	 * 初期表示処理
+	 */
+	public String update() {
+		try {
+			// 権限チェック
+			if (sessionmap.get("ID") == null) {
+				return "session";
+			} else if (!CommonCheck.isValidRole(CommonConstant.SCREEN_NO.ATTENDANCE_ENTRY.value,
+					sessionmap.get("ID").toString())) {
+				return "role";
+			}
+
+			// 通知回数チェック
+			if (sessionmap.get("NOTIFICATION_COUNT") != null) {
+				List<String> notificationList = (List<String>) sessionlist.get("NOTIFICATION_LIST");
+				if (notificationList != null) {
+					if (notificationList.contains(attendanceListEidtFrm.getChoose_date())) {
+						notificationList.remove(attendanceListEidtFrm.getChoose_date());
+						int count = Integer.parseInt(sessionmap.get("NOTIFICATION_COUNT").toString());
+						count = count - 1;
+						sessionmap.put("NOTIFICATION_COUNT", count + "");
+					}
+				}
+			}
+
+			Connection conn = null;
+			ResultSet rs;
+			conn = DataConnection.getConnection();
+			Timestamp fixed_time = new Timestamp(new Date().getTime());
+
+			String query2 = "SELECT * FROM attendance WHERE choose_date='" + attendanceListEidtFrm.getChoose_date()
+					+ "' AND emp_cd='" + attendanceListEidtFrm.getEmp_cd() + "'";
+			PreparedStatement ps = conn.prepareStatement(query2);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				String queryUpd = "UPDATE attendance SET start_time = ?, " + "end_time = ?, " + "choose_date = ?, "
+						+ "work_hour = ?, " + "overtime = ?, " + "midnight_overtime = ?, "
+						+ "compensatory_leave_hour = ?, " + "releaving_leave_hour = ?, " + "task_description = ?, "
+						+ "midnight_compensatory_leave_hour = ?," + "day = ?, " + "break_time = ?, "
+						+ "modified_date = ? ,"+ "created_date = ? " +" WHERE choose_date='" + attendanceListEidtFrm.getChoose_date()
+						+ "'AND emp_cd='" + attendanceListEidtFrm.getEmp_cd() + "'";
+				ps = conn.prepareStatement(queryUpd);
+				ps.setString(1, attendanceListEidtFrm.getStart_time());
+				ps.setString(2, attendanceListEidtFrm.getEnd_time());
+				ps.setString(3, attendanceListEidtFrm.getChoose_date());
+				ps.setString(4, attendanceListEidtFrm.getWork_hour());
+				ps.setString(5, attendanceListEidtFrm.getOvertime());
+				ps.setString(6, attendanceListEidtFrm.getMidnight_overtime());
+				ps.setString(7, attendanceListEidtFrm.getCompensatory_leave_hour());
+				ps.setString(8, attendanceListEidtFrm.getReleaving_leave_hour());
+				ps.setString(9, attendanceListEidtFrm.getTask_description());
+				ps.setString(10, attendanceListEidtFrm.getMidnight_compensatory_leave_hour());
+				if (attendanceListEidtFrm.getDay() != null && attendanceListEidtFrm.getDay().equals("true"))
+					ps.setString(11, "1");
+				else
+					ps.setString(11, "0");
+				ps.setString(12, attendanceListEidtFrm.getBreak_time());
+				ps.setTimestamp(13, fixed_time);
+				ps.setTimestamp(14, rs.getTimestamp("created_date"));
+				sessionmap.put("attendancelist_emp_cd", attendanceListEidtFrm.getEmp_cd());
+				ps.executeUpdate();
+				//get Monday of choose Date
+				String start_date = getMondayDate(attendanceListEidtFrm.getChoose_date());
+				
+				//store work record
+				createWorkRecord(attendanceListEidtFrm.getEmp_cd(), start_date, attendanceListEidtFrm.getChoose_date(), attendanceListEidtFrm.getWork_hour(), reportContentFrm);		
+				
+				return SUCCESS;
+			}
+			// else error occur
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ERROR;
+		}
+		return ERROR;
+	}
+
+	@Override
+	public void setSession(Map<String, Object> session) {
+		this.sessionmap = (SessionMap) session;
+		sessionlist = (SessionMap) session;
+	}
+
+	public HttpServletRequest getServletRequest() {
+		return request;
+	}
+
+	public void setServletRequest(HttpServletRequest request) {
+		this.request = request;
+	}
+	
+	/**
+	 * 土日祝日の日付を取得
+	 * 
+	 * @param year
+	 *            int
+	 * @param month
+	 *            int
+	 * @return List<String>土日祝日一覧
+	 * 
+	 */
+	public List<String> getHolidaysByMonth(int year, int month) throws AJDException {
+		List<String> dayList = new ArrayList<String>();
+		Month mon = new Month(year, month);
+		for (AJD day : mon.getDays()) {
+			int d = day.getDay();
+			// 祝日を取得
+			Holiday h = Holiday.getHoliday(day);
+			String dayName = day.getWeek().getJpName();
+			String date = String.format("%d-%02d-%02d", mon.getYear(), mon.getMonth(), d);
+			if (h != null) {
+				// 祝日の場合戻り値に日付を追加
+				dayList.add(date);
+			} else {
+				if (dayName.equalsIgnoreCase("日")) {
+					// 祝日でなくても土日の場合戻り値に日付を追加
+					dayList.add(date);
+				}
+			}
+		}
+		return dayList;
+	}
+	
+	/**
+	 * システム日付取得
+	 * @return
+	 */
+	private String getSystemDate(){
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		Date date = new Date();
+		return dateFormat.format(date);
+	}
+	
+	/**
+	 * 日付を加算する
+	 * @param inputDate
+	 * @param addNo
+	 * @return
+	 */
+	private String addDate(String inputDate, int addNo) {
+		String outputDate="";
+		try {
+			SimpleDateFormat sourceDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			Date dt = sourceDateFormat.parse(inputDate);
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(dt);
+			cal.add(Calendar.DATE, addNo);			
+			outputDate = sourceDateFormat.format(cal.getTime());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		return outputDate;
+	}
+	
+	/**
+	 * 選択日の月曜日を取る
+	 * @param chooseDate
+	 * @return
+	 */
+	private String getMondayDate(String choose_date){
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		//convert String to LocalDate
+		LocalDate chooseDate = LocalDate.parse(choose_date, formatter);;
+	    LocalDate started_date = chooseDate.with(previousOrSame(MONDAY));
+	    return started_date.toString();
+	}
+	
+	/**
+	 * 実績処理
+	 * @throws Exception 
+	 * 作成(5/2020)ssl
+	 */
+	@SuppressWarnings("resource")
+	private void createWorkRecord(String emp_cd, String started_date, String choose_date, String work_hour, ReportContentForm reportContentFrm) throws Exception{
+		Connection conn = null;
+		ResultSet rs;
+		conn = DataConnection.getConnection();	
+		String sql = "SELECT report_cd FROM reportcontent WHERE emp_cd ='" +emp_cd+ "' AND started_date ='"+started_date+"'";
+		PreparedStatement ps1 = conn.prepareStatement(sql);
+		rs = ps1.executeQuery();	
+		String rptCd = "";
+		if(rs!=null && rs.next()) {
+			rptCd = rs.getString("report_cd");
+			sql = "SELECT * FROM reportcontentdetail WHERE report_cd ='" +rptCd+ "' AND work_date ='"+choose_date+"' ORDER BY work_date,reportdetail_cd";
+			ps1 = conn.prepareStatement(sql);
+			rs = ps1.executeQuery();
+			List<ReportContentFormDetail> detailList = new ArrayList<ReportContentFormDetail>(); 
+			while (rs.next()) {
+				ReportContentFormDetail detail = new ReportContentFormDetail();
+				detail.setReportdetail_cd(rs.getString("reportdetail_cd"));
+				detail.setReport_cd(rs.getString("report_cd"));
+				detail.setContents(rs.getString("content"));
+				detail.setPlan_progress(rs.getString("plan_progress"));
+				detail.setPlan_time(rs.getString("plan_time"));
+				detail.setResult(rs.getString("result"));
+				detail.setWork_date(rs.getString("work_date"));
+				detail.setActual_time(rs.getString("actual_time"));
+				detail.setActual_progress(rs.getString("actual_progress"));
+				detail.setCreated_date(rs.getString("created_date"));
+				detail.setUpdated_date(rs.getString("updated_date"));
+				detailList.add(detail);
+			}
+			if(detailList.size() > reportContentFrm.getReportContentDetail().size()){
+				for(int i=0;i<detailList.size();i++){
+					detailList.get(i).setUpdated_date(getSystemDate());
+					if(i==0){
+						detailList.get(i).setActual_time(work_hour);
+					}
+					if(i<reportContentFrm.getReportContentDetail().size()){
+						detailList.get(i).setResult(reportContentFrm.getReportContentDetail().get(i).getResult());
+						sql = "UPDATE reportcontentdetail SET result=?, actual_time=?, updated_date=? WHERE reportdetail_cd=?";
+						ps1=conn.prepareStatement(sql);
+						ps1.setString(1, detailList.get(i).getResult());
+						ps1.setString(2, detailList.get(i).getActual_time());
+						ps1.setString(3, detailList.get(i).getUpdated_date());
+						ps1.setString(4, detailList.get(i).getReportdetail_cd());
+						ps1.executeUpdate();
+					} else {
+						detailList.get(i).setResult("");
+						if(detailList.get(i).getContents().equalsIgnoreCase("")||detailList.get(i).getContents().isEmpty()){
+							sql = "DELETE FROM reportcontentdetail WHERE reportdetail_cd=?";
+							ps1=conn.prepareStatement(sql);
+							ps1.setString(1, detailList.get(i).getReportdetail_cd());
+							ps1.executeUpdate();
+						} else {
+							sql = "UPDATE reportcontentdetail SET result=?, actual_time=?, updated_date=? WHERE reportdetail_cd=?";
+							ps1=conn.prepareStatement(sql);
+							ps1.setString(1, detailList.get(i).getResult());
+							ps1.setString(2, detailList.get(i).getActual_time());
+							ps1.setString(3, detailList.get(i).getUpdated_date());
+							ps1.setString(4, detailList.get(i).getReportdetail_cd());
+							ps1.executeUpdate();
+						}
+					}
+														
+				}	
+			} else {
+				for(int i=0;i<reportContentFrm.getReportContentDetail().size();i++){
+		
+					if(i==0){
+						reportContentFrm.getReportContentDetail().get(i).setActual_time(work_hour);
+						detailList.get(i).setActual_time(work_hour);
+					}
+					if(i<detailList.size()){
+						detailList.get(i).setUpdated_date(getSystemDate());
+						detailList.get(i).setResult(reportContentFrm.getReportContentDetail().get(i).getResult());	
+						sql = "UPDATE reportcontentdetail SET result=?, actual_time=?, updated_date=? WHERE reportdetail_cd=?";
+						ps1=conn.prepareStatement(sql);
+						ps1.setString(1, detailList.get(i).getResult());
+						ps1.setString(2, detailList.get(i).getActual_time());
+						ps1.setString(3, detailList.get(i).getUpdated_date());
+						ps1.setString(4, detailList.get(i).getReportdetail_cd());
+						ps1.executeUpdate();
+					} else {
+						reportContentFrm.getReportContentDetail().get(i).setReport_cd(detailList.get(0).getReport_cd());
+						reportContentFrm.getReportContentDetail().get(i).setContents("");
+						reportContentFrm.getReportContentDetail().get(i).setPlan_progress("");
+						reportContentFrm.getReportContentDetail().get(i).setPlan_time("");
+						reportContentFrm.getReportContentDetail().get(i).setWork_date(detailList.get(0).getWork_date());
+						if(i!=0){
+							reportContentFrm.getReportContentDetail().get(i).setActual_time("");
+						}
+						reportContentFrm.getReportContentDetail().get(i).setActual_progress("");
+						
+						sql = "INSERT INTO reportcontentdetail (report_cd, work_date, content, plan_progress, plan_time, result, actual_progress, actual_time, created_date, updated_date) VALUES(?,?,?,?,?,?,?,?,?,?)";
+						
+						ps1=conn.prepareStatement(sql);
+						ps1.setString(1, reportContentFrm.getReportContentDetail().get(i).getReport_cd());
+						ps1.setString(2, reportContentFrm.getReportContentDetail().get(i).getWork_date());
+						ps1.setString(3, reportContentFrm.getReportContentDetail().get(i).getContents());
+						ps1.setString(4, reportContentFrm.getReportContentDetail().get(i).getPlan_progress());
+						ps1.setString(5, reportContentFrm.getReportContentDetail().get(i).getPlan_time());
+						ps1.setString(6, reportContentFrm.getReportContentDetail().get(i).getResult());
+						ps1.setString(7, reportContentFrm.getReportContentDetail().get(i).getActual_progress());
+						ps1.setString(8, reportContentFrm.getReportContentDetail().get(i).getActual_time());
+						ps1.setString(9, getSystemDate());
+						ps1.setString(10, getSystemDate());
+						ps1.executeUpdate();
+					}													
+				}		
+			}		
+		} else {
+			sql = "INSERT INTO reportcontent (emp_cd, started_date, customer_name, manager_comment, pe_comment, gl_comment, emp_comment, created_date, updated_date) VALUES(?,?,?,?,?,?,?,?,?)";
+			ps1=conn.prepareStatement(sql);
+			ps1.setString(1, emp_cd);
+			ps1.setString(2, started_date);
+			ps1.setString(3, "-1");
+			ps1.setString(4, "");
+			ps1.setString(5, "");
+			ps1.setString(6, "");
+			ps1.setString(7, "");
+			ps1.setString(8, getSystemDate());
+			ps1.setString(9, getSystemDate());
+			ps1.executeUpdate();	
+			sql = "SELECT report_cd FROM reportcontent WHERE emp_cd ='" + emp_cd + "' AND started_date ='"+started_date+"'";
+			ps1 = conn.prepareStatement(sql);
+			rs = ps1.executeQuery();
+			if(rs!=null && rs.next()) {
+				rptCd = rs.getString("report_cd");
+			}					
+			if(!rptCd.isEmpty()) {
+				List<ReportContentFormDetail> detailListOldList = new ArrayList<ReportContentFormDetail>();
+				for(int i=0; i<7; i++) {
+					ReportContentFormDetail detail = new ReportContentFormDetail();
+					detail.setWork_date(addDate(started_date, i));
+					detailListOldList.add(detail);
+				}
+				List<ReportContentFormDetail> detailListNewList = new ArrayList<ReportContentFormDetail>();
+				for (ReportContentFormDetail detailOld:detailListOldList) {
+					if(detailOld.getWork_date().equalsIgnoreCase(choose_date)){
+						int count=0;
+						for (ReportContentFormDetail chooseDateDetail:reportContentFrm.getReportContentDetail()) {
+							chooseDateDetail.setWork_date(choose_date);
+							if(count == 0){
+								chooseDateDetail.setActual_time(work_hour);
+							}
+							detailListNewList.add(chooseDateDetail);
+							count++;
+						}
+					} else{
+						detailListNewList.add(detailOld);
+					}						
+				}
+				for (ReportContentFormDetail detail : detailListNewList) {						
+					sql = "INSERT INTO reportcontentdetail (report_cd, work_date, content, plan_progress, plan_time, result, actual_progress, actual_time, created_date, updated_date) VALUES(?,?,?,?,?,?,?,?,?,?)";					
+					ps1=conn.prepareStatement(sql);
+					ps1.setString(1, rptCd);
+					ps1.setString(2, detail.getWork_date());
+					ps1.setString(3, detail.getContents());
+					ps1.setString(4, detail.getPlan_progress());
+					ps1.setString(5, detail.getPlan_time());
+					ps1.setString(6, detail.getResult());
+					ps1.setString(7, detail.getActual_progress());
+					ps1.setString(8, detail.getActual_time());
+					ps1.setString(9, getSystemDate());
+					ps1.setString(10, getSystemDate());
+					ps1.executeUpdate();
+				}	
+			}										
+		}
+	}	
+}

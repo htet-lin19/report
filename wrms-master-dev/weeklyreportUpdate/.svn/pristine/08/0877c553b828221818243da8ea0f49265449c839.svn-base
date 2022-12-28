@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD  
+ Struts Configuration 2.1//EN"   
+"http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+
+	<constant name="struts.multipart.maxSize" value="1000000" />
+	<constant name="struts.custom.i18n.resources" value="fileUpload" />
+	<constant name="struts.ui.theme" value="simple" />
+	<package name="default" extends="struts-default">
+		<result-types>
+			<result-type name="json" class="org.apache.struts2.json.JSONResult" />
+		</result-types>
+		<interceptors>
+			<interceptor name="json"
+				class="org.apache.struts2.json.JSONInterceptor" />
+		</interceptors>
+
+		<!-- Login -->
+		<action name="login" class="com.action.LoginAction" method="execute">
+			<result name="success">home.jsp</result>
+			<result name="error">loginError.jsp</result>
+		</action>
+
+		<!-- Home -->
+		<action name="Notificationhome" class="com.action.HomeNotificationAction"
+			method="execute">
+			<result name="success">home.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- SignUpEntry -->
+		<action name="SignUpNew" class="com.action.SignUpEntryAction"
+			method="execute">
+			<result name="success">signUpEntry.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="SignUpInsert" class="com.action.SignUpEntryAction"
+			method="insert">
+			<result name="success">signUpEntry.jsp</result>
+			<result name="error">signUpEntry.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- SignUpList -->
+		<action name="SignUpListSearch" class="com.action.SignUpListAction"
+			method="search">
+			<result name="success">signUpList.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="SignUpListEdit" class="com.action.SignUpListAction"
+			method="edit">
+			<result name="success">signUpList.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="SignUpListDelete" class="com.action.SignUpListAction"
+			method="delete">
+			<result name="success">signUpList.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- Logout -->
+		<action name="logout" class="com.action.LoginAction" method="logout">
+			<result name="success">logoutSuccess.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+			<result name="role">home.jsp</result>
+		</action>
+
+		<!-- Password Change -->
+		<action name="EmpSignUp" class="com.action.EmpSignUpAction"
+			method="update">
+			<result name="success">registerSuccess.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmpSignUpNew" class="com.action.EmpSignUpAction"
+			method="execute">
+			<result name="success">empSignUp.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- AttendanceList -->
+		<action name="AttendanceListSearch" class="com.action.AttendanceListAction"
+			method="search">
+			<result name="success">attendanceList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceListMultiDelete" class="com.action.AttendanceListAction"
+			method="multiDelete">
+			<result name="success">attendanceList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceListEdit" class="com.action.AttendanceListAction"
+			method="edit">
+			<result name="success">attendanceList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceListDelete" class="com.action.AttendanceListAction"
+			method="delete">
+			<result name="success">attendanceList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceListNew" class="com.action.AttendanceListAction"
+			method="execute">
+			<result name="success">attendanceList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- AttendanceImport -->
+		<action name="doImport" class="com.action.AttendanceImportAction"
+			method="execute">
+			<result name="AttendanceImport">attendanceImport.jsp</result>
+			<result name="success">attendanceImport.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="attendanceImport" class="com.action.AttendanceImportAction"
+			method="attendanceImport">
+			<param name="maximumSize">1000000</param>
+			<interceptor-ref name="fileUpload" />
+			<interceptor-ref name="basicStack" />
+			<interceptor-ref name="workflow" />
+			<interceptor-ref name="defaultStack" />
+			<result name="AttendanceImport">attendanceImport.jsp</result>
+			<result name="input">attendanceImport.jsp</result>
+			<result name="success">attendanceImport.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="insertImportList" class="com.action.AttendanceImportAction"
+			method="insertImportList">
+			<result name="AttendanceImport">attendanceImport.jsp</result>
+			<result name="success">attendanceImport.jsp</result>
+			<result name="input">attendanceImport.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- GroupEntry -->
+		<action name="GroupEntryNew" class="com.action.GroupEntryAction"
+			method="execute">
+			<result name="success">groupMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="GroupEntryInsert" class="com.action.GroupEntryAction"
+			method="insert">
+			<result name="success">groupMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- GroupList -->
+		<action name="GroupListNew" class="com.action.GroupListAction"
+			method="execute">
+			<result name="success">groupMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="GroupListSearch" class="com.action.GroupListAction"
+			method="search">
+			<result name="success">groupMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		
+		<action name="GroupListEdit" class="com.action.GroupListAction"
+			method="edit">
+			<result name="success">groupMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="GroupListDelete" class="com.action.GroupListAction"
+			method="delete">
+			<result name="success">groupMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+	
+		<!-- ReportEntry -->
+		<action name="ReportEntrySearch" method="search"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportEntryInsert" method="insert"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+			<result name="reportList" type="redirectAction">ReportListSearch</result>
+		</action>
+		<action name="ReportEntryAdd" method="add"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportEntryRemove" method="remove"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportEntryNew" method="execute"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportEntryClear1" method="clearCondition"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportEntryClear2" method="clearResult"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- ReportList -->
+		<action name="ReportListSearch" method="search"
+			class="com.action.ReportListAction">
+			<result name="success">reportList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportListNew" method="execute"
+			class="com.action.ReportListAction">
+			<result name="success">reportList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportListDelete" method="delete"
+			class="com.action.ReportListAction">
+			<result name="success">reportList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportListEdit" method="edit"
+			class="com.action.ReportEntryAction">
+			<result name="success">reportEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="ReportListMultiDelete" class="com.action.ReportListAction"
+			method="multiDelete">
+			<result name="success">reportList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- AttendanceEntry -->
+		<action name="AttendanceEntry" method="insert"
+			class="com.action.AttendanceEntryAction">
+			<result name="success">attendanceEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceUpdate" method="update"
+			class="com.action.AttendanceEntryAction">
+			<result name="success" type="redirectAction">AttendanceListSearch</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceEntryNew" method="execute"
+			class="com.action.AttendanceEntryAction">
+			<result name="success">attendanceEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceEntryClear" method="Clear"
+			class="com.action.AttendanceEntryAction">
+			<result name="success">attendanceEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceEntryEdit" method="edit"
+			class="com.action.AttendanceEntryAction">
+			<result name="success">attendanceEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="attendanceList">attendanceList.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- AttendanceSettingEntry -->
+		<action name="AttendanceSettingInsert" method="insert"
+			class="com.action.AttendanceSettingAction">
+			<result name="success">attendanceSettingEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceSettingNew" method="execute"
+			class="com.action.AttendanceSettingAction">
+			<result name="success">attendanceSettingEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceSettingClear" method="clear"
+			class="com.action.AttendanceSettingAction">
+			<result name="success">attendanceSettingEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- EmployeeList -->
+		<action name="EmployeeListNew" class="com.action.EmployeeListAction"
+			method="execute">
+			<result name="success">employeeMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmployeeListSearch" class="com.action.EmployeeListAction"
+			method="search">
+			<result name="success">employeeMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmployeeListEdit" class="com.action.EmployeeListAction"
+			method="edit">
+			<result name="success">employeeMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmployeeListDelete" class="com.action.EmployeeListAction"
+			method="delete">
+			<result name="success">employeeMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- EmployeeEntry -->
+		<action name="EmployeeNew" class="com.action.EmployeeMasterAction"
+			method="execute">
+			<result name="success">employeeMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmployeeInsert" class="com.action.EmployeeMasterAction"
+			method="save">
+			<result name="success">employeeMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="EmployeeClear" class="com.action.EmployeeMasterAction"
+			method="clear">
+			<result name="success">employeeMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- CustomerList -->
+		<action name="CustomerListNew" class="com.action.CustomerListAction"
+			method="execute">
+			<result name="success">customerMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="CustomerListSearch" class="com.action.CustomerListAction"
+			method="search">
+			<result name="success">customerMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="CustomerListEdit" class="com.action.CustomerListAction"
+			method="edit">
+			<result name="success">customerMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="CustomerListDelete" class="com.action.CustomerListAction"
+			method="delete">
+			<result name="success">customerMasterList.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+
+		<!-- CustomerEntry -->
+		<action name="CustomerNew" class="com.action.CustomerMasterAction"
+			method="execute">
+			<result name="success">customerMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="CustomerInsert" class="com.action.CustomerMasterAction"
+			method="save">
+			<result name="success">customerMasterEntry.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<!-- Export -->
+		<action name="AttendanceExportNew" class="com.action.AttendanceExportAction"
+			method="execute">
+			<result name="success">searchExport.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<action name="AttendanceExportSearch" class="com.action.AttendanceExportAction"
+			method="search">
+			<result name="success">searchExport.jsp</result>
+			<result name="error">/common/error.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<!-- Excel -->
+		<action name="AttendanceExportExcel" class="com.action.AttendanceExportAction"
+			method="excel">
+			<result name="success" type="stream">
+				<param name="contentDisposition">attachment;filename="${reportFile}"</param>
+				<param name="contentType">application/vnd.ms-excel</param>
+				<param name="charSet">UTF-8</param>
+				<param name="inputName">inputStream</param>
+				<param name="bufferSize">1024</param>
+			</result>
+			<result name="error">searchExport.jsp</result>
+			<result name="role">home.jsp</result>
+			<result name="session">sessionTimeOut.jsp</result>
+		</action>
+		<!-- Reset Password -->
+		<action name="ResetPassword" class="com.action.ResetPasswordAction"
+			method="execute">
+			<result name="success">resetPasswordEntry.jsp</result>
+			<result name="error">index.jsp</result>
+		</action>
+		<!-- send activation code -->
+		<action name="sendCode" class="com.action.ResetPasswordAction"
+			method="generateCode">
+			<result name="success">activationCodeEntry.jsp</result>
+			<result name="error">resetPasswordEntry.jsp</result>
+		</action>
+		<!-- check activation code -->
+		<action name="checkCode" class="com.action.ResetPasswordAction"
+			method="checkActivationCode">
+			<param name="emp_cd">%{#emp_cd}</param>
+			<result name="success">changePasswordEntry.jsp</result>
+			<result name="error">activationCodeEntry.jsp</result>
+		</action>
+		<!-- change password -->
+		<action name="changePassword" class="com.action.ResetPasswordAction"
+			method="update">
+			<param name="emp_cd">%{#emp_cd}</param>
+			<result name="success">resetPasswordSuccess.jsp</result>
+			<result name="error">changePasswordEntry.jsp</result>
+		</action>
+	</package>
+</struts>
